@@ -1,0 +1,151 @@
+# Boston Housing
+
+The *mlbench* package contains the data set `BostonHousing`. 
+
+Create a linear regression model that predicts the medium home value of the census tract as a function of the relevant predictors. Please refer to the process diagram from class. Don't forget to examine the response and predictors variable using graphical and other means.  Show your work.
+
+This is a `rmarkdown` Document. You can use `rmarkdown` to produce a Word Doc
+file, a presentation, html file, etc. Please just submit the code.
+
+
+```r
+#install.packages("mlbench")
+#install.packages("corrplot")
+#install.packages("caret")
+library(caret)
+library(mlbench)
+library(magrittr)
+library(ggplot2)
+library(corrplot)
+library(dplyr)
+data(BostonHousing)
+
+# Place your code here:
+
+```
+housing <- BostonHousing[order(BostonHousing$medv),]
+library(caret)
+set.seed(3277)
+trainingIndices <- createDataPartition(BostonHousing$medv, p=0.75, list=FALSE)
+housingTraining <- housing[trainingIndices,]
+housingTesting <- housing[-trainingIndices,]
+nrow(housingTraining)
+nrow(housingTesting)
+
+colnames(housingTraining)
+
+### UNIVARIATE
+qplot( housingTraining$medv )
+hist(housingTraining$medv)
+summary(housingTraining)
+
+## BIVARIATE WITH RESPONSE
+ggplot( aes(x=medv, y=rm), data=housingTraining ) +
+  geom_point() +
+  geom_smooth( method=lm)
+
+
+## NumCyl : Discrete Numeric
+qplot( housingTraining$medv %>% factor )
+
+
+ggplot( aes(x=NumCyl, y=medv), data=housingTraining ) +
+  geom_point() +
+  geom_smooth(method=lm)
+
+#Simple Linear model 
+
+fit <- lm(medv ~ crim + zn + indus + chas + nox + rm + age + dis + rad + tax + ptratio + b + lstat, data=housingTraining)
+fit
+summary(fit)
+plot(fit)
+rmse(fit$fitted.values, BostonHousing$medv)
+
+#fit1
+fit.1  <- lm(medv ~ crim + zn + indus + chas + nox + age + dis + rad + tax + ptratio + b, data=housingTraining)
+
+rmse(fit.1$fitted.values, BostonHousing$medv)
+plot(fit.1)
+
+
+#qplot(fit$fitted.values, BostonHousing$medv)
+
+
+#Age and B has minimal impact removing them 
+
+#comparing Test and Training Data with predict
+
+predicted <- predict(fit,newdata=housingTesting)
+
+summary(predicted)
+
+summary(housingTesting$medv)
+   
+plot(predicted,housingTesting$medv)
+
+diff <- predicted - housingTesting$medv
+diff
+rmse(predicted, housingTesting$medv)
+
+##fit1
+predicted.1 <- predict(fit.1,newdata=housingTesting)
+
+summary(predicted.1)
+
+summary(housingTesting$medv)
+   
+plot(predicted.1,housingTesting$medv)
+
+diff.1 <- predicted.1 - housingTesting$medv
+diff.1
+rmse(predicted.1, housingTesting$medv)
+
+#comapring the predicted and test variable 
+
+sumofsquares<-function(x){
+return (sum(x^2))
+}
+
+sumofsquares(diff)
+
+## Compare Point Estimates
+
+ggplot( aes(x=medv, y=fit$fitted.values), data=housingTraining ) + geom_point() + 
+  coord_equal( ylim=c(0,70), xlim=c(0,70) ) + 
+  geom_abline( slope=1, intercept=0, color="red") +
+  xlab( "medv") + 
+  ylab("Estimated fitted value") + 
+  theme( plot.background = element_blank() )
+
+
+
+# attributes of linear model
+
+residuals(fit)
+summary(fit)
+
+hist(fit$residuals, xlab="residuals", main="Histogram of residuals")
+
+residuals(fit.1)
+summary(fit.1)
+hist(fit.1$residuals, xlab="residuals", main="Histogram of residuals")
+
+# Stepwise Example
+library(MASS)
+
+f <- stepAIC( fit, scope=list(lower=medv~1, upper=medv~.),direction="backward") 
+
+# Stepwise Example
+library(MASS)
+
+f <- stepAIC( fit.1, scope=list(lower=medv~1, upper=medv~.),direction="backward") 
+
+
+
+
+
+
+
+
+
+
